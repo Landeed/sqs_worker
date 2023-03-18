@@ -1,86 +1,15 @@
-/*!
-
-### Simple Example
-
-Simple example: [examples/simple.rs](https://github.com/avencera/sqs_listener/blob/master/examples/simple.rs)
-
-```rust,ignore
-use sqs_listener::{Region, SQSListener, SQSListenerClientBuilder};
-
-#[tokio::main]
-async fn main() -> eyre::Result<()> {
-    env_logger::init();
-    color_eyre::install()?;
-
-    let listener = SQSListener::new("".to_string(), |message| {
-        println!("Message received {:#?}", message)
-    });
-
-    let client = SQSListenerClientBuilder::new(Region::UsEast1)
-        .listener(listener)
-        .build()?;
-
-    let _ = client.start().await;
-
-    Ok(())
-}
-```
-
-### Start a listener using AWS creds
-
-Example with creds: [examples/with_creds.rs](https://github.com/avencera/sqs_listener/blob/master/examples/with_creds.rs)
-
-```rust,ignore
-use std::env;
-
-use sqs_listener::{
-    credential::StaticProvider, request::HttpClient, Region, SQSListener, SQSListenerClientBuilder,
-};
-
-#[tokio::main]
-async fn main() -> eyre::Result<()> {
-    env_logger::init();
-    color_eyre::install()?;
-
-    let aws_access_key_id =
-        env::var("AWS_ACCESS_KEY_ID").expect("AWS_ACCESS_KEY_ID env variable needs to be present");
-
-    let aws_secret_access_key = env::var("AWS_SECRET_ACCESS_KEY")
-        .expect("AWS_SECRET_ACCESS_KEY env variable needs to be present");
-
-    let listener = SQSListener::new("".to_string(), |message| {
-        println!("Message received {:#?}", message)
-    });
-
-    let client = SQSListenerClientBuilder::new_with(
-        HttpClient::new().expect("failed to create request dispatcher"),
-        StaticProvider::new_minimal(aws_access_key_id, aws_secret_access_key),
-        Region::UsEast1,
-    )
-    .listener(listener)
-    .build()?;
-
-    let _ = client.start().await;
-
-    Ok(())
-}
-```
-*/
 pub mod client;
 
 use act_zero::runtimes::tokio::spawn_actor;
 use act_zero::*;
+pub use aws_config::environment::EnvironmentVariableCredentialsProvider;
+pub use aws_sdk_config::Region;
+use aws_sdk_sqs::client::Client;
+use aws_sdk_sqs::error::{DeleteMessageError, ReceiveMessageError};
+pub use aws_sdk_sqs::model::Message;
+use aws_smithy_http::result::SdkError;
 use derive_builder::Builder;
-use rusoto_core::{DispatchSignedRequest, RusotoError};
-use rusoto_sqs::{DeleteMessageError, ReceiveMessageError, SqsClient};
 use std::time::Duration;
-
-pub use rusoto_core::{
-    credential,
-    region::{self, Region},
-    request,
-};
-pub use rusoto_sqs::Message;
 
 /// Used to build a new [SQSListenerClient]
 pub type SQSListenerClientBuilder<F> = client::SQSListenerClientBuilder<F>;
@@ -101,10 +30,10 @@ pub type SQSListenerClientBuilderError = client::SQSListenerClientBuilderError;
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unable to receive messages: {0}")]
-    ReceiveMessages(#[from] RusotoError<ReceiveMessageError>),
+    ReceiveMessages(#[from] SdkError<ReceiveMessageError>),
 
     #[error("unable to acknowledge message: {0}")]
-    AckMessage(#[from] RusotoError<DeleteMessageError>),
+    AckMessage(#[from] SdkError<DeleteMessageError>),
 
     #[error("Message did not contain a message handle to use for acknowledging")]
     NoMessageHandle,
@@ -119,25 +48,25 @@ pub enum Error {
 /// Create a new Builder
 impl<F: Fn(&Message) + Send + Sync> SQSListenerClientBuilder<F> {
     /// Create a new listener the default AWS client and queue_url
-    pub fn new(region: Region) -> Self {
-        Self::new_with_client(SqsClient::new(region))
+
+    pub fn new() -> Self {
+        let region_provider = Region::new("us-west-2".to_string());
+        let credentials_provider = EnvironmentVariableCredentialsProvider::new();
+
+        let conf = aws_sdk_sqs::Config::builder()
+            .region(region_provider)
+            .credentials_provider(credentials_provider)
+            .build();
+
+        let client = aws_sdk_sqs::Client::from_conf(conf);
+
+        Self::new_with_client(client)
     }
 
     /// Create a new listener with custom credentials, request dispatcher, region and queue_url
-    pub fn new_with<P, D>(request_dispatcher: D, credentials_provider: P, region: Region) -> Self
-    where
-        P: credential::ProvideAwsCredentials + Send + Sync + 'static,
-        D: DispatchSignedRequest + Send + Sync + 'static,
-    {
-        Self::new_with_client(SqsClient::new_with(
-            request_dispatcher,
-            credentials_provider,
-            region,
-        ))
-    }
 
     /// Create new listener with a client and queue_url
-    pub fn new_with_client(client: SqsClient) -> Self {
+    pub fn new_with_client(client: Client) -> Self {
         client::SQSListenerClientBuilder::priv_new_with_client(client)
     }
 
@@ -246,9 +175,7 @@ mod tests {
             println!("{:#?}", message)
         });
 
-        let client = SQSListenerClientBuilder::new(Region::UsEast1)
-            .listener(listener)
-            .build();
+        let client = SQSListenerClientBuilder::new().listener(listener).build();
 
         assert!(client.is_ok())
     }
@@ -267,7 +194,7 @@ mod tests {
             .auto_ack(false)
             .build();
 
-        let client = SQSListenerClientBuilder::new(Region::UsEast1)
+        let client = SQSListenerClientBuilder::new()
             .listener(listener)
             .config(config)
             .build();

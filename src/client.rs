@@ -1,12 +1,12 @@
 #![doc(hidden)]
-/// Implementation details for SQSListenerClient, don't use directly.
-/// Instead use [SQSListenerClient](super::SQSListenerClient) and [SQSListenerClientBuilder](super::SQSListenerClientBuilder)
-use rusoto_sqs::{DeleteMessageRequest, Message, ReceiveMessageRequest, Sqs};
-
 use async_trait::async_trait;
+
+use aws_sdk_sqs::model::Message;
+
 use derive_builder::Builder;
 use log::{debug, error, info};
-use rusoto_sqs::SqsClient;
+
+use aws_sdk_sqs::client::Client;
 
 use act_zero::runtimes::tokio::Timer;
 use act_zero::timer::Tick;
@@ -22,7 +22,7 @@ pub struct SQSListenerClient<F: Fn(&Message) + Send + Sync + 'static> {
     #[builder(default = "Addr::detached()", setter(skip))]
     pub(crate) pid: Addr<SQSListenerClient<F>>,
 
-    pub(crate) client: SqsClient,
+    pub(crate) client: Client,
 
     #[builder(default = "ConfigBuilder::default().build()")]
     pub(crate) config: Config,
@@ -41,7 +41,7 @@ impl<F: Fn(&Message) + Send + Sync> SQSListenerClientBuilder<F> {
     }
 
     // implementation, needs to be in this module because we are using Default with private fields
-    pub(crate) fn priv_new_with_client(client: SqsClient) -> Self {
+    pub(crate) fn priv_new_with_client(client: Client) -> Self {
         Self {
             client: Some(client),
             ..Default::default()
@@ -57,10 +57,10 @@ impl<F: Fn(&Message) + Send + Sync> SQSListenerClient<F> {
 
         let ignore = self
             .client
-            .delete_message(DeleteMessageRequest {
-                queue_url: self.listener.queue_url.clone(),
-                receipt_handle: message.receipt_handle.clone().unwrap(),
-            })
+            .delete_message()
+            .queue_url(self.listener.queue_url.clone())
+            .receipt_handle(message.receipt_handle().unwrap())
+            .send()
             .await;
 
         match ignore {
@@ -115,10 +115,9 @@ impl<F: Fn(&Message) + Send + Sync> SQSListenerClient<F> {
 
         let messages = self
             .client
-            .receive_message(ReceiveMessageRequest {
-                queue_url: self.listener.queue_url.clone(),
-                ..Default::default()
-            })
+            .receive_message()
+            .queue_url(self.listener.queue_url.clone())
+            .send()
             .await?
             .messages
             .ok_or(Error::UnknownReceiveMessages)?;
