@@ -1,16 +1,15 @@
 #![doc(hidden)]
-use async_trait::async_trait;
-
-use aws_sdk_sqs::model::Message;
-
-use derive_builder::Builder;
-use log::{debug, error, info};
-
-use aws_sdk_sqs::client::Client;
 
 use act_zero::runtimes::tokio::Timer;
 use act_zero::timer::Tick;
 use act_zero::*;
+/// Implementation details for SQSListenerClient, don't use directly.
+/// Instead use [SQSListenerClient](super::SQSListenerClient) and [SQSListenerClientBuilder](super::SQSListenerClientBuilder)
+use async_trait::async_trait;
+use aws_sdk_sqs::client::Client;
+use aws_sdk_sqs::model::Message;
+use derive_builder::Builder;
+use log::{debug, error, info};
 
 use super::{Config, ConfigBuilder, Error, SQSListener};
 
@@ -113,14 +112,17 @@ impl<F: Fn(&Message) + Send + Sync> SQSListenerClient<F> {
         debug!("get and handle messages called");
         let handler = &self.listener.handler;
 
-        let messages = self
+        let receive_result = self
             .client
             .receive_message()
             .queue_url(self.listener.queue_url.clone())
             .send()
-            .await?
-            .messages
-            .ok_or(Error::UnknownReceiveMessages)?;
+            .await;
+
+        let messages = match receive_result {
+            Ok(output) => output.messages.unwrap_or(vec![]),
+            Err(_) => return Err(Error::UnknownReceiveMessages),
+        };
 
         for message in messages {
             // ignore result
