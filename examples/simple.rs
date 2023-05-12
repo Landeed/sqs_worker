@@ -1,4 +1,4 @@
-use sqs_listener::{SQSListener, SQSListenerClientBuilder};
+use sqs_worker::{SQSListener, SQSListenerClientBuilder};
 use std::env;
 
 #[tokio::main]

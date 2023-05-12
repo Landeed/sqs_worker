@@ -1,4 +1,4 @@
-use sqs_listener::{EnvironmentVariableCredentialsProvider, SQSListener, SQSListenerClientBuilder};
+use sqs_worker::{EnvironmentVariableCredentialsProvider, SQSListener, SQSListenerClientBuilder};
 use std::env;
 
 #[tokio::main]
