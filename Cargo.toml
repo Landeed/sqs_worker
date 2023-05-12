@@ -1,13 +1,13 @@
 [package]
-authors = ["Praveen Perera <praveen@avencera.com>"]
-description = "An easy to use listener, to listen for messages from SQS queues"
+authors = ["Landeed <sumanmandava@landeed.com>"]
+description = "A simple listener for message in a queue using AWS-SDK for Rust"
 documentation = "https://docs.rs/sqs_listener"
-edition = "2018"
-homepage = "https://github.com/avencera/sqs_listener"
+edition = "2021"
+homepage = "https://github.com/Landeed/sqs_worker"
 license = "Apache-2.0"
-name = "sqs_listener"
-repository = "https://github.com/avencera/sqs_listener"
-version = "0.2.0"
+name = "sqs_worker"
+repository = "https://github.com/Landeed/sqs_worker"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -44,5 +44,4 @@ aws-credential-types = "0.54.1"
 env_logger = "0.10.0"
 eyre = "0.6"
 color-eyre = "0.6.2"
-
 
