@@ -9,7 +9,6 @@ async fn main() -> eyre::Result<()> {
     let queue_url = env::var("QUEUE_URL").expect("QUEUE_URL env variable needs to be present");
 
     let region = env::var("REGION").ok();
-    // move region provider
 
     let credentials_provider = EnvironmentVariableCredentialsProvider::new();
 
