@@ -1,7 +1,7 @@
 [package]
 authors = ["Landeed <sumanmandava@landeed.com>"]
 description = "A simple listener for message in a queue using AWS-SDK for Rust"
-documentation = "https://docs.rs/sqs_listener"
+documentation = "https://docs.rs/sqs_worker/0.1.0/sqs_worker/"
 edition = "2021"
 homepage = "https://github.com/Landeed/sqs_worker"
 license = "Apache-2.0"
