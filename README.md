@@ -12,7 +12,7 @@ Available on crates: [crates.io/sqs_worker](https://crates.io/crates/sqs_worker)
 Documentation available at: [docs.rs/sqs_worker](https://docs.rs/sqs_worker/0.1.0/sqs_worker/)
 
 ```toml
-sqs_worker = "0.1.2"
+sqs_worker = "0.1.3"
 ```
 
 ### Simple Example
@@ -20,7 +20,7 @@ sqs_worker = "0.1.2"
 Simple example: [/examples/simple.rs](examples/simple.rs)
 
 ```rust
-use sqs_worker::{EnvironmentVariableCredentialsProvider, SQSListener, SQSListenerClientBuilder};
+use sqs_worker::{SQSListener, SQSListenerClientBuilder};
 use std::env;
 
 #[tokio::main]
@@ -28,23 +28,21 @@ async fn main() -> eyre::Result<()> {
     env_logger::init();
     color_eyre::install()?;
 
-    let queue_url = env::var("QUEUE_URL").expect("QUEUE_URL env variable needs to be present");
+    let queue_url = env::var("QUEUE_URL").unwrap_or("".to_string());
 
     let region = env::var("REGION").ok();
 
-    let credentials_provider = EnvironmentVariableCredentialsProvider::new();
-
     let listener = SQSListener::new(queue_url, |message| {
-        println!("Message received {:#?}", message.body())
+        println!("Message received {:#?}", message)
     });
-
-    let client = SQSListenerClientBuilder::new_with(region, credentials_provider)
+    let client = SQSListenerClientBuilder::new(region)
         .listener(listener)
         .build()?;
     let _ = client.start().await;
-   
+    
     Ok(())
 }
+
 ```
 
 ### Start a listener using AWS creds
