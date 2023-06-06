@@ -12,7 +12,7 @@ Available on crates: [crates.io/sqs_worker](https://crates.io/crates/sqs_worker)
 Documentation available at: [docs.rs/sqs_worker](https://docs.rs/sqs_worker/0.1.0/sqs_worker/)
 
 ```toml
-sqs_worker = "0.1.1"
+sqs_worker = "0.1.2"
 ```
 
 ### Simple Example
