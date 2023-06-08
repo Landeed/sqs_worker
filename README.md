@@ -1,4 +1,4 @@
-# sqs_listener
+# sqs_worker
 
 ![Build Status](https://github.com/avencera/sqs_listener/workflows/Rust/badge.svg)
 [![Crates.io](https://img.shields.io/crates/v/sqs_listener.svg)](https://crates.io/crates/sqs_worker)
@@ -12,7 +12,7 @@ Available on crates: [crates.io/sqs_worker](https://crates.io/crates/sqs_worker)
 Documentation available at: [docs.rs/sqs_worker](https://docs.rs/sqs_worker/0.1.0/sqs_worker/)
 
 ```toml
-sqs_worker = "0.1.3"
+sqs_worker = "0.1.4"
 ```
 
 ### Simple Example
