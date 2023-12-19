@@ -7,7 +7,7 @@ homepage = "https://github.com/Landeed/sqs_worker"
 license = "Apache-2.0"
 name = "sqs_worker"
 repository = "https://github.com/Landeed/sqs_worker"
-version = "0.1.4"
+version = "0.1.5"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -33,12 +33,12 @@ log = {version = "0.4", features = ["serde"]}
 derive_builder = "0.12.0"
 
 # aws sqs
-aws-sdk-sqs = "0.24.0"
-aws-types = "0.54.1"
-aws-smithy-http = "0.54.3"
-aws-sdk-config = "0.24.0"
-aws-config = "0.54.1"
-aws-credential-types = "0.54.1"
+aws-sdk-sqs = { version = "1.7.0", features = ["behavior-version-latest"] }
+aws-types = "1.1.1"
+aws-smithy-runtime-api = "1.1.1"
+aws-sdk-config = { version = "1.7.0", features = ["behavior-version-latest"] }
+aws-config = { version = "1.1.1", features = ["behavior-version-latest"] }
+aws-credential-types = "1.1.1"
 
 # for examples
 env_logger = "0.10.0"

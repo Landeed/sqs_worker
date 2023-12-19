@@ -54,11 +54,15 @@ use act_zero::runtimes::tokio::spawn_actor;
 use act_zero::*;
 pub use aws_config::environment::EnvironmentVariableCredentialsProvider;
 use aws_credential_types::provider::ProvideCredentials;
-pub use aws_sdk_config::Region;
+pub use aws_sdk_config::config::Region;
 use aws_sdk_sqs::client::Client;
-use aws_sdk_sqs::error::{DeleteMessageError, ReceiveMessageError};
-pub use aws_sdk_sqs::model::Message;
-use aws_smithy_http::result::SdkError;
+use aws_sdk_sqs::operation::{
+    delete_message::DeleteMessageError, receive_message::ReceiveMessageError,
+};
+pub use aws_sdk_sqs::types::Message;
+
+use aws_smithy_runtime_api::client::orchestrator::HttpResponse;
+use aws_smithy_runtime_api::client::result::SdkError;
 use derive_builder::Builder;
 use std::time::Duration;
 
@@ -76,15 +80,14 @@ pub type SQSListenerClientBuilder<F> = client::SQSListenerClientBuilder<F>;
 /// ```
 
 pub type SQSListenerClientBuilderError = client::SQSListenerClientBuilderError;
-
 /// Error type for sqs_listener
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("unable to receive messages: {0}")]
-    ReceiveMessages(#[from] SdkError<ReceiveMessageError>),
+    ReceiveMessages(#[from] SdkError<ReceiveMessageError, HttpResponse>),
 
     #[error("unable to acknowledge message: {0}")]
-    AckMessage(#[from] SdkError<DeleteMessageError>),
+    AckMessage(#[from] SdkError<DeleteMessageError, HttpResponse>),
 
     #[error("Message did not contain a message handle to use for acknowledging")]
     NoMessageHandle,

@@ -7,7 +7,7 @@ use act_zero::*;
 /// Instead use [SQSListenerClient](super::SQSListenerClient) and [SQSListenerClientBuilder](super::SQSListenerClientBuilder)
 use async_trait::async_trait;
 use aws_sdk_sqs::client::Client;
-use aws_sdk_sqs::model::Message;
+use aws_sdk_sqs::types::Message;
 use derive_builder::Builder;
 use log::{debug, error, info};
 
